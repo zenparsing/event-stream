@@ -130,15 +130,11 @@ export class EventStream {
   listen(onNext, onError, onComplete) {
     let subscription = new Subscription(onNext, onError, onComplete);
 
-    try {
-      subscription.cleanup = this[$subscriber].call(undefined,
-        x => subscription.send('next', x),
-        x => subscription.send('error', x),
-        x => subscription.send('complete', x)
-      );
-    } catch (e) {
-      hostReportError(e);
-    }
+    subscription.cleanup = this[$subscriber].call(undefined,
+      x => subscription.send('next', x),
+      x => subscription.send('error', x),
+      x => subscription.send('complete', x)
+    );
 
     if (subscription.state === 'initializing')
       subscription.state = 'ready';
