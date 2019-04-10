@@ -1,7 +1,6 @@
 const { execSync } = require('child_process');
-const plugins = require('./babel-plugins');
 
-execSync('babel src --out-dir lib --plugins=' + plugins.join(','), {
+execSync('babel src --out-dir lib --plugins=transform-es2015-modules-commonjs', {
   env: process.env,
   stdio: 'inherit',
 });
