@@ -137,7 +137,7 @@ export class EventStream {
         x => subscription.send('complete', x)
       );
     } catch (e) {
-      subscription.send('complete', e);
+      hostReportError(e);
     }
 
     if (subscription.state === 'initializing')
