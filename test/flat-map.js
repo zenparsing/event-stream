@@ -4,8 +4,8 @@ describe('flatMap', () => {
   it('maps and flattens the results using the supplied callback', async () => {
     let list = [];
 
-    await Observable.of('a', 'b', 'c').flatMap(x =>
-      Observable.of(1, 2, 3).map(y => [x, y])
+    await EventStream.of('a', 'b', 'c').flatMap(x =>
+      EventStream.of(1, 2, 3).map(y => [x, y])
     ).forEach(x => list.push(x));
 
     assert.deepEqual(list, [

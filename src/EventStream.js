@@ -24,7 +24,7 @@ function getSpecies(obj) {
 }
 
 const $brand = Symbol();
-const $subscriber = Symbol();
+const $initializer = Symbol();
 
 function isEventStream(x) {
   return x[$brand] === x; // SPEC: Brand check
@@ -116,21 +116,21 @@ class Subscription {
 
 export class EventStream {
 
-  constructor(subscriber) {
+  constructor(initializer) {
     if (!(this instanceof EventStream))
       throw new TypeError('EventStream cannot be called as a function');
 
-    if (typeof subscriber !== 'function')
+    if (typeof initializer !== 'function')
       throw new TypeError('EventStream initializer must be a function');
 
-    this[$subscriber] = subscriber;
+    this[$initializer] = initializer;
     this[$brand] = this;
   }
 
   listen(onNext, onError, onComplete) {
     let subscription = new Subscription(onNext, onError, onComplete);
 
-    subscription.cleanup = this[$subscriber].call(undefined,
+    subscription.cleanup = this[$initializer].call(undefined,
       x => subscription.send('next', x),
       x => subscription.send('error', x),
       x => subscription.send('complete', x)

@@ -1,12 +1,12 @@
 import assert from 'assert';
 
 describe('concat', () => {
-  it('concatenates the supplied Observable arguments', async () => {
+  it('concatenates the supplied EventStream arguments', async () => {
     let list = [];
 
-    await Observable
+    await EventStream
       .from([1, 2, 3, 4])
-      .concat(Observable.of(5, 6, 7))
+      .concat(EventStream.of(5, 6, 7))
       .forEach(x => list.push(x));
 
     assert.deepEqual(list, [1, 2, 3, 4, 5, 6, 7]);
@@ -16,8 +16,8 @@ describe('concat', () => {
     const list1 = [];
     const list2 = [];
 
-    const concatenated = Observable.from([1, 2, 3, 4])
-      .concat(Observable.of(5, 6, 7));
+    const concatenated = EventStream.from([1, 2, 3, 4])
+      .concat(EventStream.of(5, 6, 7));
 
     await concatenated
       .forEach(x => list1.push(x));

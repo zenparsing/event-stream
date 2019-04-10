@@ -1,11 +1,15 @@
 export function parse(string) {
-  return new Observable(async observer => {
-    await null;
-    for (let char of string) {
-      if (observer.closed) return;
-      else if (char !== '-') observer.next(char);
+  return new EventStream((next, error, complete) => {
+    (async function() {
       await null;
-    }
-    observer.complete();
+      for (let char of string) {
+        if (closed) return;
+        else if (char !== '-') next(char);
+        await null;
+      }
+      complete();
+    })();
+    let closed = false;
+    return () => closed = true;
   });
 }

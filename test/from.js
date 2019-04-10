@@ -10,8 +10,8 @@ describe('from', () => {
     },
   };
 
-  it('is a method on Observable', () => {
-    testMethodProperty(Observable, 'from', {
+  it('is a method on EventStream', () => {
+    testMethodProperty(EventStream, 'from', {
       configurable: true,
       writable: true,
       length: 1,
@@ -19,44 +19,44 @@ describe('from', () => {
   });
 
   it('throws if the argument is null', () => {
-    assert.throws(() => Observable.from(null));
+    assert.throws(() => EventStream.from(null));
   });
 
   it('throws if the argument is undefined', () => {
-    assert.throws(() => Observable.from(undefined));
+    assert.throws(() => EventStream.from(undefined));
   });
 
   it('throws if the argument is not observable or iterable', () => {
-    assert.throws(() => Observable.from({}));
+    assert.throws(() => EventStream.from({}));
   });
 
   describe('observables', () => {
     it('returns the input if the constructor matches "this"', () => {
       let ctor = function() {};
-      let observable = new Observable(() => {});
+      let observable = new EventStream(() => {});
       observable.constructor = ctor;
-      assert.equal(Observable.from.call(ctor, observable), observable);
+      assert.equal(EventStream.from.call(ctor, observable), observable);
     });
 
-    it('wraps the input if it is not an instance of Observable', () => {
+    it('wraps the input if it is not an instance of EventStream', () => {
       let obj = {
-        constructor: Observable,
-        observe() {}
+        constructor: EventStream,
+        listen() {}
       };
-      assert.ok(Observable.from(obj) !== obj);
+      assert.ok(EventStream.from(obj) !== obj);
     });
 
     it('returns an observable wrapping @@observable result', () => {
       let inner = {
-        observe(next, error, complete) {
+        listen(next, error, complete) {
           observer = { next, error, complete };
           return () => { cleanupCalled = true };
         },
       };
       let observer;
       let cleanupCalled = true;
-      let observable = Observable.from(inner);
-      observable.observe();
+      let stream = EventStream.from(inner);
+      stream.listen();
       assert.equal(typeof observer.next, 'function');
       observer.complete();
       assert.equal(cleanupCalled, true);
@@ -65,12 +65,12 @@ describe('from', () => {
 
   describe('iterables', () => {
     it('throws if @@iterator is not a method', () => {
-      assert.throws(() => Observable.from({ [Symbol.iterator]: 1 }));
+      assert.throws(() => EventStream.from({ [Symbol.iterator]: 1 }));
     });
 
     it('returns an observable wrapping iterables', async () => {
       let calls = [];
-      let subscription = Observable.from(iterable).observe(
+      let subscription = EventStream.from(iterable).listen(
         v => calls.push(['next', v]),
         () => {},
         () => calls.push(['complete'])

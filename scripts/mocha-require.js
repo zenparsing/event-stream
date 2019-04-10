@@ -1,3 +1,3 @@
 require('babel-core/register')({
-  plugins: require('./babel-plugins'),
+  plugins: 'transform-es2015-modules-commonjs',
 });

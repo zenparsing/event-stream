@@ -4,7 +4,7 @@ describe('filter', () => {
   it('filters the results using the supplied callback', async () => {
     let list = [];
 
-    await Observable
+    await EventStream
       .from([1, 2, 3, 4])
       .filter(x => x > 2)
       .forEach(x => list.push(x));

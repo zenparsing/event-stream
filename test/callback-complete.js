@@ -1,16 +1,16 @@
 import assert from 'assert';
 import { testMethodProperty } from './properties.js';
 
-describe('observer.complete', () => {
+describe('callback-complete', () => {
 
   function getObserver(...args) {
     let observer = {};
 
-    observer.cancel = new Observable((next, error, complete) => {
+    observer.cancel = new EventStream((next, error, complete) => {
       observer.next = next;
       observer.error = error;
       observer.complete = complete;
-    }).observe(...args);
+    }).listen(...args);
 
     return observer;
   }
@@ -45,7 +45,7 @@ describe('observer.complete', () => {
 
   it('throws if the subscription is not initialized', async () => {
     assert.throws(() => {
-      new Observable((next, error, complete) => {
+      new EventStream((next, error, complete) => {
         complete();
       }).observe();
     });
@@ -54,9 +54,9 @@ describe('observer.complete', () => {
   it('sends if the observer is running', async () => {
     let observer;
     let completed = false;
-    new Observable((next, error, complete) => {
+    new EventStream((next, error, complete) => {
       observer = { next, error, complete };
-    }).observe(
+    }).listen(
       () => observer.complete(),
       null,
       () => completed = true
@@ -66,48 +66,45 @@ describe('observer.complete', () => {
   });
 
   it('closes the subscription before invoking inner observer', () => {
-    let closed;
-    let observer = getObserver({
-      complete() { closed = observer.closed },
-    });
+    let hasValue = false;
+    let observer = getObserver(
+      () => { hasValue = true },
+      null,
+      () => { observer.next() },
+    );
     observer.complete();
-    assert.equal(closed, true);
+    assert.equal(hasValue, false);
   });
 
-  it('reports error if "complete" is not a method', () => {
-    let observer = getObserver({ complete: 1 });
-    observer.complete();
-    assert.ok(hostError instanceof Error);
+  it('throws error if "complete" is not a method', () => {
+    let observer = getObserver(null, null, 1);
+    assert.throws(() => observer.complete());
   });
 
-  it('does not report error if "complete" is undefined', () => {
-    let observer = getObserver({ complete: undefined });
+  it('does not throw an error if "complete" is undefined', () => {
+    let observer = getObserver(null, null, undefined);
     observer.complete();
-    assert.ok(!hostError);
+    assert.doesNotThrow(() => observer.complete());
   });
 
-  it('does not report error if "complete" is null', () => {
-    let observer = getObserver({ complete: null });
-    observer.complete();
-    assert.ok(!hostError);
+  it('does not throw an error if "complete" is null', () => {
+    let observer = getObserver(null, null, null);
+    assert.doesNotThrow(() => observer.complete());
   });
 
-  it('reports error if "complete" throws', () => {
+  it('throws an error if "complete" throws', () => {
     let error = {};
-    let observer = getObserver({ complete() { throw error } });
-    observer.complete();
-    assert.equal(hostError, error);
+    let observer = getObserver(null, null, () => { throw error });
+    assert.throws(() => observer.complete());
   });
 
   it('calls the cleanup method after "complete"', () => {
     let calls = [];
     let observer;
-    new Observable(x => {
-      observer = x;
+    new EventStream((next, error, complete) => {
+      observer = { next, error, complete };
       return () => { calls.push('cleanup') };
-    }).subscribe({
-      complete() { calls.push('complete') },
-    });
+    }).listen(null, null, () => { calls.push('complete') });
     observer.complete();
     assert.deepEqual(calls, ['complete', 'cleanup']);
   });
@@ -115,22 +112,21 @@ describe('observer.complete', () => {
   it('calls the cleanup method if there is no "complete"', () => {
     let calls = [];
     let observer;
-    new Observable(x => {
-      observer = x;
+    new EventStream((next, error, complete) => {
+      observer = { next, error, complete };
       return () => { calls.push('cleanup') };
-    }).subscribe({});
+    }).listen();
     observer.complete();
     assert.deepEqual(calls, ['cleanup']);
   });
 
-  it('reports error if the cleanup function throws', () => {
+  it('throws an error if the cleanup function throws', () => {
     let error = {};
     let observer;
-    new Observable(x => {
-      observer = x;
+    new EventStream((next, error, complete) => {
+      observer = { next, error, complete };
       return () => { throw error };
-    }).subscribe();
-    observer.complete();
-    assert.equal(hostError, error);
+    }).listen();
+    assert.throws(() => observer.complete());
   });
 });

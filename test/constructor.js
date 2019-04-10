@@ -3,24 +3,24 @@ import { testMethodProperty } from './properties.js';
 
 describe('constructor', () => {
   it('throws if called as a function', () => {
-    assert.throws(() => Observable(() => {}));
-    assert.throws(() => Observable.call({}, () => {}));
+    assert.throws(() => EventStream(() => {}));
+    assert.throws(() => EventStream.call({}, () => {}));
   });
 
   it('throws if the argument is not callable', () => {
-    assert.throws(() => new Observable({}));
-    assert.throws(() => new Observable());
-    assert.throws(() => new Observable(1));
-    assert.throws(() => new Observable('string'));
+    assert.throws(() => new EventStream({}));
+    assert.throws(() => new EventStream());
+    assert.throws(() => new EventStream(1));
+    assert.throws(() => new EventStream('string'));
   });
 
   it('accepts a function argument', () => {
-    let result = new Observable(() => {});
-    assert.ok(result instanceof Observable);
+    let result = new EventStream(() => {});
+    assert.ok(result instanceof EventStream);
   });
 
-  it('is the value of Observable.prototype.constructor', () => {
-    testMethodProperty(Observable.prototype, 'constructor', {
+  it('is the value of EventStream.prototype.constructor', () => {
+    testMethodProperty(EventStream.prototype, 'constructor', {
       configurable: true,
       writable: true,
       length: 1,
@@ -29,7 +29,7 @@ describe('constructor', () => {
 
   it('does not call the subscriber function', () => {
     let called = 0;
-    new Observable(() => { called++ });
+    new EventStream(() => { called++ });
     assert.equal(called, 0);
   });
 

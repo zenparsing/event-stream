@@ -5,7 +5,7 @@ describe('observer.next', () => {
 
   function getObserver(inner) {
     let observer;
-    new Observable(x => { observer = x }).subscribe(inner);
+    new EventStream(x => { observer = x }).subscribe(inner);
     return observer;
   }
 
@@ -41,7 +41,7 @@ describe('observer.next', () => {
   it('does not forward when the subscription is cancelled', () => {
     let count = 0;
     let observer;
-    let subscription = new Observable(x => { observer = x }).subscribe({
+    let subscription = new EventStream(x => { observer = x }).subscribe({
       next() { count++ },
     });
     subscription.unsubscribe();
@@ -51,7 +51,7 @@ describe('observer.next', () => {
 
   it('remains closed if the subscription is cancelled from "next"', () => {
     let observer;
-    let subscription = new Observable(x => { observer = x }).subscribe({
+    let subscription = new EventStream(x => { observer = x }).subscribe({
       next() { subscription.unsubscribe() },
     });
     observer.next();
@@ -61,7 +61,7 @@ describe('observer.next', () => {
   it('queues if the subscription is not initialized', async () => {
     let values = [];
     let observer;
-    new Observable(x => { observer = x, x.next(1) }).subscribe({
+    new EventStream(x => { observer = x, x.next(1) }).subscribe({
       next(val) {
         values.push(val);
         if (val === 1) {
@@ -79,7 +79,7 @@ describe('observer.next', () => {
 
   it('drops queue if subscription is closed', async () => {
     let values = [];
-    let subscription = new Observable(x => { x.next(1) }).subscribe({
+    let subscription = new EventStream(x => { x.next(1) }).subscribe({
       next(val) { values.push(val) },
     });
     assert.deepEqual(values, []);
@@ -91,7 +91,7 @@ describe('observer.next', () => {
   it('queues if the observer is running', async () => {
     let observer;
     let values = [];
-    new Observable(x => { observer = x }).subscribe({
+    new EventStream(x => { observer = x }).subscribe({
       next(val) {
         values.push(val);
         if (val === 1) observer.next(2);

@@ -1,26 +1,23 @@
 import assert from 'assert';
 import { testMethodProperty } from './properties.js';
 
-describe('observer.error', () => {
+describe.only('callback-error', () => {
 
-  function getObserver(inner) {
-    let observer;
-    new Observable(x => { observer = x }).subscribe(inner);
+  function getObserver(...args) {
+    let observer = {};
+
+    observer.cancel = new EventStream((next, error, complete) => {
+      observer.next = next;
+      observer.error = error;
+      observer.complete = complete;
+    }).listen(...args);
+
     return observer;
   }
 
-  it('is a method of SubscriptionObserver', () => {
-    let observer = getObserver();
-    testMethodProperty(Object.getPrototypeOf(observer), 'error', {
-      configurable: true,
-      writable: true,
-      length: 1,
-    });
-  });
-
   it('forwards the argument', () => {
     let args;
-    let observer = getObserver({ error(...a) { args = a } });
+    let observer = getObserver(null, (...a) => { args = a });
     observer.error(1);
     assert.deepEqual(args, [1]);
   });
@@ -38,7 +35,7 @@ describe('observer.error', () => {
 
   it('does not throw when the subscription is cancelled', () => {
     let observer;
-    let subscription = new Observable(x => { observer = x }).subscribe({
+    let subscription = new EventStream(x => { observer = x }).subscribe({
       error() {},
     });
     subscription.unsubscribe();
@@ -48,7 +45,7 @@ describe('observer.error', () => {
 
   it('queues if the subscription is not initialized', async () => {
     let error;
-    new Observable(x => { x.error({}) }).subscribe({
+    new EventStream(x => { x.error({}) }).subscribe({
       error(err) { error = err },
     });
     assert.equal(error, undefined);
@@ -59,7 +56,7 @@ describe('observer.error', () => {
   it('queues if the observer is running', async () => {
     let observer;
     let error;
-    new Observable(x => { observer = x }).subscribe({
+    new EventStream(x => { observer = x }).subscribe({
       next() { observer.error({}) },
       error(e) { error = e },
     });
@@ -108,7 +105,7 @@ describe('observer.error', () => {
   it('calls the cleanup method after "error"', () => {
     let calls = [];
     let observer;
-    new Observable(x => {
+    new EventStream(x => {
       observer = x;
       return () => { calls.push('cleanup') };
     }).subscribe({
@@ -121,7 +118,7 @@ describe('observer.error', () => {
   it('calls the cleanup method if there is no "error"', () => {
     let calls = [];
     let observer;
-    new Observable(x => {
+    new EventStream(x => {
       observer = x;
       return () => { calls.push('cleanup') };
     }).subscribe({});
@@ -134,7 +131,7 @@ describe('observer.error', () => {
   it('reports error if the cleanup function throws', () => {
     let error = {};
     let observer;
-    new Observable(x => {
+    new EventStream(x => {
       observer = x;
       return () => { throw error };
     }).subscribe();
