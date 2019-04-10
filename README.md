@@ -1,31 +1,31 @@
-# zen-observable
+# event-stream
 
-An implementation of Observables for JavaScript. Requires Promises or a Promise polyfill.
+An implementation of EventStream for JavaScript.
 
 ## Install
 
 ```sh
-npm install zen-observable
+npm install @zenparsing/event-stream
 ```
 
 ## Usage
 
 ```js
-import Observable from 'zen-observable';
+import EventStream from '@zenparsing/event-stream';
 
-Observable.of(1, 2, 3).subscribe(x => console.log(x));
+EventStream.of(1, 2, 3).listen(x => console.log(x));
 ```
 
 ## API
 
-### new Observable(subscribe)
+### new EventStream(initializer)
 
 ```js
-let observable = new Observable(observer => {
+let EventStream = new EventStream((next, error, complete) => {
   // Emit a single value after 1 second
   let timer = setTimeout(() => {
-    observer.next('hello');
-    observer.complete();
+    next('hello');
+    complete();
   }, 1000);
 
   // On unsubscription, cancel the timer
@@ -33,83 +33,64 @@ let observable = new Observable(observer => {
 });
 ```
 
-Creates a new Observable object using the specified subscriber function.  The subscriber function is called whenever the `subscribe` method of the observable object is invoked.  The subscriber function is passed an *observer* object which has the following methods:
+Creates a new EventStream object using the specified initializer function.  The initializer function is called whenever the `listen` method of the EventStream object is invoked.  The initializer function is passed the following callback functions:
 
 - `next(value)` Sends the next value in the sequence.
 - `error(exception)` Terminates the sequence with an exception.
 - `complete()` Terminates the sequence successfully.
-- `closed` A boolean property whose value is `true` if the observer's subscription is closed.
 
-The subscriber function can optionally return either a cleanup function or a subscription object.  If it returns a cleanup function, that function will be called when the subscription has closed.  If it returns a subscription object, then the subscription's `unsubscribe` method will be invoked when the subscription has closed.
+The initializer function can optionally return either a cleanup function.  If it returns a cleanup function, that function will be called when the subscription has closed.
 
-### Observable.of(...items)
+### EventStream.of(...items)
 
 ```js
 // Logs 1, 2, 3
-Observable.of(1, 2, 3).subscribe(x => {
+EventStream.of(1, 2, 3).listen(x => {
   console.log(x);
 });
 ```
 
-Returns an observable which will emit each supplied argument.
+Returns an EventStream which will emit each supplied argument.
 
-### Observable.from(value)
+### EventStream.from(value)
 
 ```js
 let list = [1, 2, 3];
 
 // Iterate over an object
-Observable.from(list).subscribe(x => {
+EventStream.from(list).listen(x => {
   console.log(x);
 });
 ```
 
 ```js
-// Convert something 'observable' to an Observable instance
-Observable.from(otherObservable).subscribe(x => {
+// Convert something 'EventStream' to an EventStream instance
+EventStream.from(otherEventStream).listen(x => {
   console.log(x);
 });
 ```
 
-Converts `value` to an Observable.
+Converts `value` to an EventStream.
 
-- If `value` is an implementation of Observable, then it is converted to an instance of Observable as defined by this library.
-- Otherwise, it is converted to an Observable which synchronously iterates over `value`.
+- If `value` is an implementation of EventStream, then it is converted to an instance of EventStream as defined by this library.
+- Otherwise, it is converted to an EventStream which synchronously iterates over `value`.
 
-### observable.subscribe([observer])
-
-```js
-let subscription = observable.subscribe({
-  next(x) { console.log(x) },
-  error(err) { console.log(`Finished with error: ${ err }`) },
-  complete() { console.log('Finished') }
-});
-```
-
-Subscribes to the observable.  Observer objects may have any of the following methods:
-
-- `next(value)` Receives the next value of the sequence.
-- `error(exception)` Receives the terminating error of the sequence.
-- `complete()` Called when the stream has completed successfully.
-
-Returns a subscription object that can be used to cancel the stream.
-
-### observable.subscribe(nextCallback[, errorCallback, completeCallback])
+### EventStream.listen([onNext, onError, onComplete])
 
 ```js
-let subscription = observable.subscribe(
+let cancel = EventStream.listen(
   x => console.log(x),
   err => console.log(`Finished with error: ${ err }`),
   () => console.log('Finished')
 );
 ```
 
-Subscribes to the observable with callback functions. Returns a subscription object that can be used to cancel the stream.
+Listens to the EventStream. Returns a function that can be used to cancel the stream.
 
-### observable.forEach(callback)
+### EventStream.forEach(callback)
 
 ```js
-observable.forEach(x => {
+EventStream.forEach(x => {
   console.log(`Received value: ${ x }`);
 }).then(() => {
   console.log('Finished successfully')
@@ -118,29 +99,29 @@ observable.forEach(x => {
 })
 ```
 
-Subscribes to the observable and returns a Promise for the completion value of the stream.  The `callback` argument is called once for each value in the stream.
+Listens to the EventStream and returns a Promise for the completion value of the stream.  The `callback` argument is called once for each value in the stream.
 
-### observable.filter(callback)
+### EventStream.filter(callback)
 
 ```js
-Observable.of(1, 2, 3).filter(value => {
+EventStream.of(1, 2, 3).filter(value => {
   return value > 2;
-}).subscribe(value => {
+}).listen(value => {
   console.log(value);
 });
 // 3
 ```
 
-Returns a new Observable that emits all values which pass the test implemented by the `callback` argument.
+Returns a new EventStream that emits all values which pass the test implemented by the `callback` argument.
 
-### observable.map(callback)
+### EventStream.map(callback)
 
-Returns a new Observable that emits the results of calling the `callback` argument for every value in the stream.
+Returns a new EventStream that emits the results of calling the `callback` argument for every value in the stream.
 
 ```js
-Observable.of(1, 2, 3).map(value => {
+EventStream.of(1, 2, 3).map(value => {
   return value * 2;
-}).subscribe(value => {
+}).listen(value => {
   console.log(value);
 });
 // 2
@@ -148,29 +129,29 @@ Observable.of(1, 2, 3).map(value => {
 // 6
 ```
 
-### observable.reduce(callback [,initialValue])
+### EventStream.reduce(callback [, initialValue])
 
 ```js
-Observable.of(0, 1, 2, 3, 4).reduce((previousValue, currentValue) => {
+EventStream.of(0, 1, 2, 3, 4).reduce((previousValue, currentValue) => {
   return previousValue + currentValue;
-}).subscribe(result => {
+}).listen(result => {
   console.log(result);
 });
 // 10
 ```
 
-Returns a new Observable that applies a function against an accumulator and each value of the stream to reduce it to a single value.
+Returns a new EventStream that applies a function against an accumulator and each value of the stream to reduce it to a single value.
 
-### observable.concat(...sources)
+### EventStream.concat(...sources)
 
 ```js
-Observable.of(1, 2, 3).concat(
-  Observable.of(4, 5, 6),
-  Observable.of(7, 8, 9)
-).subscribe(result => {
+EventStream.of(1, 2, 3).concat(
+  EventStream.of(4, 5, 6),
+  EventStream.of(7, 8, 9)
+).listen(result => {
   console.log(result);
 });
 // 1, 2, 3, 4, 5, 6, 7, 8, 9
 ```
 
-Merges the current observable with additional observables.
+Merges the current EventStream with additional EventStreams.
