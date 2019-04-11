@@ -45,6 +45,114 @@ function hostReportError(e) {
   }
 }
 
+class AsyncAdaptor {
+
+  constructor() {
+    this.current = undefined;
+    this.requests = [];
+    this.queue = [];
+    this.done = false;
+    this.cancel = undefined;
+  }
+
+  static createIterator(stream) {
+    let adaptor = new this();
+
+    adaptor.cancel = stream.listen(
+      v => adaptor.receive('next', v),
+      v => adaptor.receive('error', v),
+      v => adaptor.receive('complete', v)
+    );
+
+    return {
+      next(v) { adaptor.request('next', v) },
+      throw(v) { adaptor.request('throw', v) },
+      return(v) { adaptor.request('return', v) },
+      [Symbol.asyncIterator]() { return this },
+    };
+  }
+
+  receive(type, value) {
+    if (this.done) return;
+
+    if (this.current) {
+      this.resolveRequest(this.current, type, value);
+      this.advanceCurrent();
+    } else {
+      this.queue.push([type, value]);
+    }
+  }
+
+  resolveRequest(request, type, value) {
+    switch (type) {
+      case 'next':
+        request.resolve({ value, done: this.done });
+        break;
+      case 'error':
+        request.reject(value);
+        this.finalize();
+        break;
+      case 'complete':
+        request.resolve({ value, done: true });
+        this.finalize();
+        break;
+    }
+  }
+
+  flushRequest(request) {
+    if (request.type === 'throw') request.reject(request.value);
+    else request.resolve({ value: request.value, done: true });
+  }
+
+  finalize() {
+    while (this.requests.length > 0)
+      this.flushRequest(this.requests.shift());
+
+    this.done = true;
+    this.current = undefined;
+    this.queue = undefined;
+    this.requests = undefined;
+    this.cancel = undefined;
+  }
+
+  advanceCurrent() {
+    if (this.done || this.requests.length === 0) this.current = undefined;
+    else this.setCurrent(this.requests.shift());
+  }
+
+  setCurrent(request) {
+    // assert(!this.done)
+    if (request.type === 'next') {
+      this.current = request;
+    } else {
+      this.cancel();
+      this.flushRequest(request);
+      this.finalize();
+    }
+  }
+
+  request(type, value) {
+    return new Promise((resolve, reject) => {
+      let request = { resolve, reject, type, value };
+
+      if (this.done) {
+        this.flushRequest(request);
+        return;
+      }
+
+      if (this.current) {
+        this.requests.push(request);
+      } else {
+        this.setCurrent(request);
+        if (!this.done && this.queue.length > 0) {
+          let [type, value] = this.queue.unshift();
+          this.resolveRequest(request, type, value);
+        }
+      }
+    });
+  }
+}
+
 class Subscription {
 
   constructor(onNext, onError, onComplete) {
@@ -52,7 +160,6 @@ class Subscription {
     this.onError = onError,
     this.onComplete = onComplete;
     this.cleanup = undefined;
-    this.queue = undefined;
     this.state = 'initializing';
   }
 
@@ -296,6 +403,10 @@ export class EventStream {
     });
   }
 
+  [Symbol.asyncIterator]() {
+    return AsyncAdaptor.createIterator(this);
+  }
+
   static from(x) {
     let C = typeof this === 'function' ? this : EventStream;
 
@@ -307,6 +418,7 @@ export class EventStream {
 
     let method;
 
+    // TODO: Symbol.listen?
     method = getMethod(x, 'listen');
     if (method)
       return new C((next, error, complete) => method.call(x, next, error, complete));

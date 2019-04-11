@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { testMethodProperty } from './properties.js';
 
-describe('observer.next', () => {
+describe('callback-next', () => {
 
   function getObserver(inner) {
     let observer;

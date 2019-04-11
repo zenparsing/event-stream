@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { testMethodProperty } from './properties.js';
 
-describe.only('callback-error', () => {
+describe('callback-error', () => {
 
   function getObserver(...args) {
     let observer = {};
