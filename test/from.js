@@ -49,16 +49,16 @@ describe('from', () => {
     it('returns an observable wrapping @@observable result', () => {
       let inner = {
         listen(next, error, complete) {
-          observer = { next, error, complete };
+          subscription = { next, error, complete };
           return () => { cleanupCalled = true };
         },
       };
-      let observer;
+      let subscription;
       let cleanupCalled = true;
       let stream = EventStream.from(inner);
       stream.listen();
-      assert.equal(typeof observer.next, 'function');
-      observer.complete();
+      assert.equal(typeof subscription.next, 'function');
+      subscription.complete();
       assert.equal(cleanupCalled, true);
     });
   });

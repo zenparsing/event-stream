@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { testMethodProperty } from './properties.js';
 
-function captureObserver(fn) {
+function capture(fn) {
   return (next, error, complete) => { fn({ next, error, complete }) };
 }
 
@@ -16,36 +16,36 @@ describe('listen', () => {
   });
 
   it('accepts a next function argument', () => {
-    let observer;
+    let subscription;
     let nextValue;
-    new EventStream(captureObserver(x => observer = x)).listen(
+    new EventStream(capture(x => subscription = x)).listen(
       v => nextValue = v
     );
-    observer.next(1);
+    subscription.next(1);
     assert.equal(nextValue, 1);
   });
 
   it('accepts an error function argument', () => {
-    let observer;
+    let subscription;
     let errorValue;
     let error = {};
-    new EventStream(captureObserver(x => observer = x)).listen(
+    new EventStream(capture(x => subscription = x)).listen(
       null,
       e => errorValue = e
     );
-    observer.error(error);
+    subscription.error(error);
     assert.equal(errorValue, error);
   });
 
   it('accepts a complete function argument', () => {
-    let observer;
+    let subscription;
     let completed = false;
-    new EventStream(captureObserver(x => observer = x)).listen(
+    new EventStream(capture(x => subscription = x)).listen(
       null,
       null,
       () => completed = true
     );
-    observer.complete();
+    subscription.complete();
     assert.equal(completed, true);
   });
 

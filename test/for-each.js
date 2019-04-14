@@ -1,6 +1,6 @@
 import assert from 'assert';
 
-function captureObserver(fn) {
+function capture(fn) {
   return (next, error, complete) => { fn({ next, error, complete }) };
 }
 
@@ -42,9 +42,9 @@ describe('forEach', () => {
   it('rejects if the producer calls error', async () => {
     let error = {};
     try {
-      let observer;
-      let promise = new EventStream(captureObserver(x => observer = x)).forEach(() => {});
-      observer.error(error);
+      let subscription;
+      let promise = new EventStream(capture(x => subscription = x)).forEach(() => {});
+      subscription.error(error);
       await promise;
       assert.ok(false);
     } catch (err) {
@@ -53,9 +53,9 @@ describe('forEach', () => {
   });
 
   it('resolves with undefined if the producer calls complete', async () => {
-    let observer;
-    let promise = new EventStream(captureObserver(x => observer = x)).forEach(() => {});
-    observer.complete();
+    let subscription;
+    let promise = new EventStream(capture(x => subscription = x)).forEach(() => {});
+    subscription.complete();
     assert.equal(await promise, undefined);
   });
 

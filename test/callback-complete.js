@@ -3,43 +3,31 @@ import { testMethodProperty } from './properties.js';
 
 describe('callback-complete', () => {
 
-  function getObserver(...args) {
-    let observer = {};
-
-    observer.cancel = new EventStream((next, error, complete) => {
-      observer.next = next;
-      observer.error = error;
-      observer.complete = complete;
-    }).listen(...args);
-
-    return observer;
-  }
-
   it('forwards arguments', () => {
     let args;
-    let observer = getObserver(null, null, (...a) => { args = a });
-    observer.complete(1);
+    let subscription = getSubscription(null, null, (...a) => { args = a });
+    subscription.complete(1);
     assert.deepEqual(args, [1]);
   });
 
   it('allows return values', () => {
-    let observer = getObserver(null, null, () => 1);
-    assert.equal(observer.complete(), 1);
+    let subscription = getSubscription(null, null, () => 1);
+    assert.equal(subscription.complete(), 1);
   });
 
   it('does not forward when the subscription is complete', () => {
     let count = 0;
-    let observer = getObserver(null, null, () => count++);
-    observer.complete();
-    observer.complete();
+    let subscription = getSubscription(null, null, () => count++);
+    subscription.complete();
+    subscription.complete();
     assert.equal(count, 1);
   });
 
   it('does not forward when the subscription is cancelled', () => {
     let count = 0;
-    let observer = getObserver(null, null, () => count++);
-    observer.cancel();
-    observer.complete();
+    let subscription = getSubscription(null, null, () => count++);
+    subscription.cancel();
+    subscription.complete();
     assert.equal(count, 0);
   });
 
@@ -51,82 +39,82 @@ describe('callback-complete', () => {
     });
   });
 
-  it('sends if the observer is running', async () => {
-    let observer;
+  it('sends if the subscription is running', async () => {
+    let subscription;
     let completed = false;
     new EventStream((next, error, complete) => {
-      observer = { next, error, complete };
+      subscription = { next, error, complete };
     }).listen(
-      () => observer.complete(),
+      () => subscription.complete(),
       null,
       () => completed = true
     );
-    observer.next();
+    subscription.next();
     assert.equal(completed, true);
   });
 
-  it('closes the subscription before invoking inner observer', () => {
+  it('closes the subscription before invoking inner subscription', () => {
     let hasValue = false;
-    let observer = getObserver(
+    let subscription = getSubscription(
       () => { hasValue = true },
       null,
-      () => { observer.next() },
+      () => { subscription.next() },
     );
-    observer.complete();
+    subscription.complete();
     assert.equal(hasValue, false);
   });
 
-  it('throws error if "complete" is not a method', () => {
-    let observer = getObserver(null, null, 1);
-    assert.throws(() => observer.complete());
+  it('throws error if callback is not a method', () => {
+    let subscription = getSubscription(null, null, 1);
+    assert.throws(() => subscription.complete());
   });
 
   it('does not throw an error if "complete" is undefined', () => {
-    let observer = getObserver(null, null, undefined);
-    observer.complete();
-    assert.doesNotThrow(() => observer.complete());
+    let subscription = getSubscription(null, null, undefined);
+    subscription.complete();
+    assert.doesNotThrow(() => subscription.complete());
   });
 
   it('does not throw an error if "complete" is null', () => {
-    let observer = getObserver(null, null, null);
-    assert.doesNotThrow(() => observer.complete());
+    let subscription = getSubscription(null, null, null);
+    assert.doesNotThrow(() => subscription.complete());
   });
 
-  it('throws an error if "complete" throws', () => {
+  it('throws an error if callback throws', () => {
     let error = {};
-    let observer = getObserver(null, null, () => { throw error });
-    assert.throws(() => observer.complete());
+    let subscription = getSubscription(null, null, () => { throw error });
+    assert.throws(() => subscription.complete());
   });
 
-  it('calls the cleanup method after "complete"', () => {
+  it('calls the cleanup method after callback', () => {
     let calls = [];
-    let observer;
+    let subscription;
     new EventStream((next, error, complete) => {
-      observer = { next, error, complete };
+      subscription = { next, error, complete };
       return () => { calls.push('cleanup') };
     }).listen(null, null, () => { calls.push('complete') });
-    observer.complete();
+    subscription.complete();
     assert.deepEqual(calls, ['complete', 'cleanup']);
   });
 
-  it('calls the cleanup method if there is no "complete"', () => {
+  it('calls the cleanup method if there is no callback', () => {
     let calls = [];
-    let observer;
+    let subscription;
     new EventStream((next, error, complete) => {
-      observer = { next, error, complete };
+      subscription = { next, error, complete };
       return () => { calls.push('cleanup') };
     }).listen();
-    observer.complete();
+    subscription.complete();
     assert.deepEqual(calls, ['cleanup']);
   });
 
   it('throws an error if the cleanup function throws', () => {
     let error = {};
-    let observer;
+    let subscription;
     new EventStream((next, error, complete) => {
-      observer = { next, error, complete };
+      subscription = { next, error, complete };
       return () => { throw error };
     }).listen();
-    assert.throws(() => observer.complete());
+    assert.throws(() => subscription.complete());
   });
 });

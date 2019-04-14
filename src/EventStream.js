@@ -65,9 +65,9 @@ class AsyncAdaptor {
     );
 
     return {
-      next(v) { adaptor.request('next', v) },
-      throw(v) { adaptor.request('throw', v) },
-      return(v) { adaptor.request('return', v) },
+      next(v) { return adaptor.request('next', v) },
+      throw(v) { return adaptor.request('throw', v) },
+      return(v) { return adaptor.request('return', v) },
       [Symbol.asyncIterator]() { return this },
     };
   }
@@ -75,18 +75,19 @@ class AsyncAdaptor {
   receive(type, value) {
     if (this.done) return;
 
-    if (this.current) {
-      this.resolveRequest(this.current, type, value);
-      if (!this.done) this.advanceCurrent();
-    } else {
-      this.queue.push([type, value]);
-    }
+    if (this.current) this.resolveCurrent(type, value);
+    else this.queue.push([type, value]);
   }
 
-  resolveRequest(request, type, value) {
+  resolveCurrent(type, value) {
+    // assert(this.current && !this.done)
+    let request = this.current;
+
     switch (type) {
       case 'next':
-        request.resolve({ value, done: this.done });
+        request.resolve({ value, done: false });
+        if (this.requests.length === 0) this.current = undefined;
+        else this.setCurrent(this.requests.shift());
         break;
       case 'error':
         request.reject(value);
@@ -115,12 +116,6 @@ class AsyncAdaptor {
     this.cancel = undefined;
   }
 
-  advanceCurrent() {
-    // assert(!this.done)
-    if (this.requests.length === 0) this.current = undefined;
-    else this.setCurrent(this.requests.shift());
-  }
-
   setCurrent(request) {
     // assert(!this.done)
     if (request.type === 'next') {
@@ -146,8 +141,8 @@ class AsyncAdaptor {
       } else {
         this.setCurrent(request);
         if (!this.done && this.queue.length > 0) {
-          let [type, value] = this.queue.unshift();
-          this.resolveRequest(request, type, value);
+          let [type, value] = this.queue.shift();
+          this.resolveCurrent(type, value);
         }
       }
     });
