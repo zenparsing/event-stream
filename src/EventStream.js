@@ -77,7 +77,7 @@ class AsyncAdaptor {
 
     if (this.current) {
       this.resolveRequest(this.current, type, value);
-      this.advanceCurrent();
+      if (!this.done) this.advanceCurrent();
     } else {
       this.queue.push([type, value]);
     }
@@ -116,7 +116,8 @@ class AsyncAdaptor {
   }
 
   advanceCurrent() {
-    if (this.done || this.requests.length === 0) this.current = undefined;
+    // assert(!this.done)
+    if (this.requests.length === 0) this.current = undefined;
     else this.setCurrent(this.requests.shift());
   }
 
