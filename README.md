@@ -75,7 +75,7 @@ Converts `value` to an EventStream.
 - If `value` is an implementation of EventStream, then it is converted to an instance of EventStream as defined by this library.
 - Otherwise, it is converted to an EventStream which synchronously iterates over `value`.
 
-### EventStream.listen([onNext, onError, onComplete])
+### eventStream.listen([onNext, onError, onComplete])
 
 ```js
 let cancel = EventStream.listen(
@@ -87,7 +87,7 @@ let cancel = EventStream.listen(
 
 Listens to the EventStream. Returns a function that can be used to cancel the stream.
 
-### EventStream.forEach(callback)
+### eventStream.forEach(callback)
 
 ```js
 EventStream.forEach(x => {
@@ -101,7 +101,7 @@ EventStream.forEach(x => {
 
 Listens to the EventStream and returns a Promise for the completion value of the stream.  The `callback` argument is called once for each value in the stream.
 
-### EventStream.filter(callback)
+### eventStream.filter(callback)
 
 ```js
 EventStream.of(1, 2, 3).filter(value => {
@@ -114,7 +114,7 @@ EventStream.of(1, 2, 3).filter(value => {
 
 Returns a new EventStream that emits all values which pass the test implemented by the `callback` argument.
 
-### EventStream.map(callback)
+### eventStream.map(callback)
 
 Returns a new EventStream that emits the results of calling the `callback` argument for every value in the stream.
 
@@ -129,7 +129,7 @@ EventStream.of(1, 2, 3).map(value => {
 // 6
 ```
 
-### EventStream.reduce(callback [, initialValue])
+### eventStream.reduce(callback [, initialValue])
 
 ```js
 EventStream.of(0, 1, 2, 3, 4).reduce((previousValue, currentValue) => {
@@ -142,7 +142,7 @@ EventStream.of(0, 1, 2, 3, 4).reduce((previousValue, currentValue) => {
 
 Returns a new EventStream that applies a function against an accumulator and each value of the stream to reduce it to a single value.
 
-### EventStream.concat(...sources)
+### eventStream.concat(...sources)
 
 ```js
 EventStream.of(1, 2, 3).concat(
